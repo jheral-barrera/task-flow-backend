@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelos basados en el diagrama ER 
+
+model User {
+  id String @id @default(uuid())
+  email String @unique
+  password String
+  name String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relaciones virtuales 
+  createdTasks Task[] @relation("CreatedTasks")
+  completedTasks Task[] @relation("CompletedTasks")
+
+  // Relacion de tabla N:M
+  taskUser TaskUser[]
+  sessionsUser SessionUser[]
+}
+
+model Session {
+  id String @id @default (uuid())
+  title String 
+  description String
+  shareCode String @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tasks Task[]
+  sessionUsers SessionUser[]
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  EDITOR
+  READER
+}
+
+model SessionUser {
+  id String @id @default(uuid())
+  role Role
+  sessionId String
+  userId String
+  joinedAt DateTime @default(now())
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([sessionId, userId])
+}
+
+model Task {
+  id String @id @default(uuid())
+  title String
+  description String
+  completed Boolean @default(false)
+  completedAt DateTime?
+  startDate DateTime
+  endDate DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parentTaskId String // FK de task
+  completedById String? // FK de user
+  createdById String // FK de user
+  sessionId String // FK de session
+
+  // Relaciones
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  completedBy User? @relation("CompletedTasks", fields: [completedById], references: [id])
+  createdBy User @relation("CreatedTasks", fields: [createdById], references: [id])
+  // compos virtuales
+  parentTask Task? @relation("Subtasks", fields: [parentTaskId], references: [id])
+  subtasks Task[] @relation("Subtasks")
+  taskUsers TaskUser[]
+}
+
+model TaskUser {
+  id String @id @default(uuid())
+  taskId String
+  userId String
+  joinedAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([taskId, userId])
+}
