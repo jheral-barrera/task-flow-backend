@@ -1,10 +1,9 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Request, UseGuards } from "@nestjs/common";
 import { SessionsService } from "./sessions.service";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
-import { CreateSessionDto } from "./dto/create-sessions.dto";
+import { CreateSessionsDto } from "./dto/create-sessions.dto";
 import { UpdateSessionsDto } from "./dto/update-sessions.dto";
-import { RoleSessionDto } from "./dto/role-sessions.dto";
-import { request } from "http";
+import { RoleSessionsDto } from "./dto/role-sessions.dto";
 
 @Controller('sessions')
 export class SessionsController {
@@ -13,8 +12,8 @@ export class SessionsController {
   //POST /sessions
   @UseGuards(JwtAuthGuard)
   @Post('')
-  create(@Request() req, @Body() createSessionDto: CreateSessionDto) {
-    return this.sessionsService.create(req.user.id, createSessionDto);
+  create(@Request() req, @Body() createSessionsDto: CreateSessionsDto) {
+    return this.sessionsService.create(req.user.id, createSessionsDto);
   }
 
   //GET /sessions
@@ -53,9 +52,9 @@ export class SessionsController {
     @Request() req,
     @Param('id') sessionId: string,
     @Param('userId') targetUserId: string,
-    @Body() roleSessionDto: RoleSessionDto,
+    @Body() roleSessionsDto: RoleSessionsDto,
   ) {
-    return this.sessionsService.changeRole(sessionId, req.user.id, targetUserId, roleSessionDto.role);
+    return this.sessionsService.changeRole(sessionId, req.user.id, targetUserId, roleSessionsDto);
   }
 
   //DELETE /sessions/:id/collaborators/:userId
@@ -71,7 +70,7 @@ export class SessionsController {
 
   //PATCH /sessions/:id/transfer-owner
   @UseGuards(JwtAuthGuard)
-  @Patch('/:id/transfer-owner')
+  @Patch('/:id/transfer-owner/:userId')
   transferOwner(
     @Request() req,
     @Param('id') sessionId: string,

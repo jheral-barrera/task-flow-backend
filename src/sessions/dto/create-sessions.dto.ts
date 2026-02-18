@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString, IsOptional } from "class-validator";
 
-export class CreateSessionDto {
+export class CreateSessionsDto {
   @IsString()
   @IsNotEmpty()
   title: string;

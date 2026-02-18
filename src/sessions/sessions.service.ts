@@ -1,8 +1,9 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "src/prisma/prisma.service";
-import { CreateSessionDto } from "./dto/create-sessions.dto";
+import { CreateSessionsDto } from "./dto/create-sessions.dto";
 import { UpdateSessionsDto } from './dto/update-sessions.dto';
 import { RoleSessionsDto } from "./dto/role-sessions.dto";
+
 
 @Injectable()
 export class SessionsService {
@@ -11,8 +12,8 @@ export class SessionsService {
   ) { }
 
     // Gestion de las sesiones
-  async create(userId: string, createSessionDto: CreateSessionDto) {
-    const { title, description } = createSessionDto;
+  async create(userId: string, CreateSessionsDto: CreateSessionsDto) {
+    const { title, description } = CreateSessionsDto;
     const shareCode = await this.generateShareCode();
     return this.prisma.session.create({
       data: {
@@ -186,7 +187,7 @@ export class SessionsService {
     }
 
     // El admin no puede cambiar el rol de un owner o admin
-    if (requerter.role === 'ADMIN' && (target.role === 'OWNER' || target.role === 'ADMIN')) {
+    if (requester.role === 'ADMIN' && (target.role === 'OWNER' || target.role === 'ADMIN')) {
       throw new ForbiddenException('Admin cannot change role of owner or admin');
     }
 
@@ -227,7 +228,7 @@ export class SessionsService {
     }
 
     // Admin no puede eliminar a un owner o admin
-    if (requester.rol === 'ADMIN' && (target.role === 'OWNER' || target.role === 'ADMIN')) {
+    if (requester.role === 'ADMIN' && (target.role === 'OWNER' || target.role === 'ADMIN')) {
       throw new ForbiddenException('Admin cannot remove owner or admin');
     }
     
@@ -271,7 +272,7 @@ export class SessionsService {
     }
 
     //metodo de transaccion de prisma
-    return this.prisma.$transacttion([
+    return this.prisma.$transaction([
       this.prisma.sessionUser.update({
         where: { id: newOwner.id },
         data: { role: 'OWNER' },
