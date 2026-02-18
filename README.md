@@ -1,98 +1,135 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Task Flow – Documentación Técnica Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 1. Descripción General del Sistema
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Task Flow es una plataforma colaborativa para la gestión de tareas que permite a usuarios autenticados:
 
-## Description
+- Crear sesiones de trabajo
+- Administrar tareas
+- Asignar colaboradores con distintos roles
+- Aplicar control de acceso basado en permisos
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+El sistema está desarrollado con NestJS, utiliza Prisma ORM y PostgreSQL como base de datos.
 
-## Project setup
+## 2. Arquitectura General
 
-```bash
-$ pnpm install
+El sistema sigue una arquitectura modular por capas alineada con las buenas prácticas de NestJS.
+
+### Capas del sistema
+
+1. **Presentation Layer**
+   - Controllers
+   - DTOs
+   - Guards
+   - Strategies
+
+2. **Application Layer**
+   - Services
+   - Business rules
+   - Use case orchestration
+
+3. **Infrastructure Layer**
+   - PrismaService
+   - Prisma Client
+   - PostgreSQL database
+
+---
+
+## 3. Architecture Diagram
+
+```mermaid
+flowchart LR
+    subgraph Presentation_Layer
+        Controllers[Controllers]
+        DTOs[DTOs]
+        Guards[Guards]
+        Strategies[JWT Strategy]
+    end
+
+    subgraph Application_Layer
+        Services[Application Services]
+        BusinessLogic[Business Logic]
+    end
+
+    subgraph Infrastructure_Layer
+        PrismaService[PrismaService]
+        PrismaClient[Prisma Client]
+        Database[(PostgreSQL)]
+    end
+
+    Controllers --> Services
+    DTOs --> Controllers
+    Guards --> Controllers
+    Strategies --> Guards
+    Services --> PrismaService
+    BusinessLogic --> Services
+    PrismaService --> PrismaClient
+    PrismaClient --> Database
 ```
 
-## Compile and run the project
+## 4. Modelo de Base de Datos
 
-```bash
-# development
-$ pnpm run start
+El modelo relacional define las entidades principales del sistema, incluyendo relaciones muchos-a-muchos mediante tablas intermedias.
 
-# watch mode
-$ pnpm run start:dev
+<img width="697" height="631" alt="Captura de pantalla 2026-02-18 105138" src="https://github.com/user-attachments/assets/1ad145e2-85c7-439c-90a5-fd9e5494109d" />
 
-# production mode
-$ pnpm run start:prod
-```
+### Características clave
 
-## Run tests
+-   Un usuario puede participar en múltiples sesiones.
+-   Una sesión puede tener múltiples usuarios con distintos roles.
+-   Una tarea pertenece a una sesión. 
+-   Una tarea puede tener subtareas (relación jerárquica).
+-   Las asignaciones de tareas se manejan mediante una tabla intermedia.
 
-```bash
-# unit tests
-$ pnpm run test
+## 6. Class Diagram – Authentication Module
 
-# e2e tests
-$ pnpm run test:e2e
+Este diagrama representa la interacción entre controladores, servicios y capa de infraestructura para el módulo de autenticación y gestión de usuarios.
 
-# test coverage
-$ pnpm run test:cov
-```
+## 7. Class Diagram – Sessions and Tasks
 
-## Deployment
+Este diagrama representa el modelo de negocio relacionado con sesiones colaborativas y gestión de tareas.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## 8. Modelo de Seguridad
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Autenticación
 
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
+-   JWT (HS256)
+-   Expiración de 7 días
+-   El payload contiene el identificador del usuario (`sub`)
+    
+### Seguridad de contraseñas
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+-   Hash con bcrypt
+-   10 salt rounds
+    
+### Restricciones de base de datos
 
-## Resources
+-   Email único
+-   shareCode único
+-   Claves compuestas en tablas intermedias
+-   Claves foráneas con eliminación en cascada cuando aplica
 
-Check out a few resources that may come in handy when working with NestJS:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## 9. Instalación del Proyecto
 
-## Support
+### Requisitos
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+-   Node.js 18+
+-   PostgreSQL 12+
+-   pnpm
 
-## Stay in touch
+### Pasos
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+1.  Instalar dependencias  
+    `pnpm install`
+    
+2.  Configurar variables de entorno
+    
+    -   DATABASE_URL
+    -   JWT_SECRET
+        
+3.  Ejecutar migraciones  
+    `pnpm prisma migrate dev`
+    
+4.  Iniciar servidor  
+    `pnpm start:dev`
