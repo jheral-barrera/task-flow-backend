@@ -26,6 +26,9 @@ model User {
   // Relaciones virtuales 
   createdTasks Task[] @relation("CreatedTasks")
   completedTasks Task[] @relation("CompletedTasks")
+  
+  sentInvitations Invitation[] @relation("SentInvitations")
+  receivedInvitations Invitation[] @relation("ReceivedInvitations")
 
   // Relacion de tabla N:M
   taskUser TaskUser[]
@@ -42,6 +45,7 @@ model Session {
 
   tasks Task[]
   sessionUsers SessionUser[]
+  invitations Invitation[]
 }
 
 enum Role {
@@ -64,6 +68,31 @@ model SessionUser {
   @@unique([sessionId, userId])
 }
 
+enum Type {
+  INVITE
+  JOIN_REQUEST
+}
+
+enum Status {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Invitation {
+  id String @id @default(uuid())
+  sessionId String
+  type Type
+  status Status
+  senderId String
+  receiverId String
+  createdAt DateTime @default(now())
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sender User @relation("SentInvitations", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedInvitations", fields: [receiverId], references: [id])
+}
+
 model Task {
   id String @id @default(uuid())
   title String
@@ -75,7 +104,7 @@ model Task {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  parentTaskId String // FK de task
+  parentTaskId String? // FK de task
   completedById String? // FK de user
   createdById String // FK de user
   sessionId String // FK de session

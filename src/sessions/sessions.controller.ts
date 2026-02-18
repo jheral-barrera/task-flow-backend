@@ -3,6 +3,8 @@ import { SessionsService } from "./sessions.service";
 import { JwtAuthGuard } from "src/auth/guards/jwt-auth.guard";
 import { CreateSessionDto } from "./dto/create-sessions.dto";
 import { UpdateSessionsDto } from "./dto/update-sessions.dto";
+import { RoleSessionDto } from "./dto/role-sessions.dto";
+import { request } from "http";
 
 @Controller('sessions')
 export class SessionsController {
@@ -41,5 +43,40 @@ export class SessionsController {
   @Delete('/:id')
   remove(@Request() req, @Param('id') id: string) {
     return this.sessionsService.remove(id, req.user.id);
+  }
+
+  //Gestion de roles y colaboradores
+  //PATCH /sessions/:id/collaborators/:userId
+  @UseGuards(JwtAuthGuard)
+  @Patch('/:id/collaborators/:userId')
+  changeRole(
+    @Request() req,
+    @Param('id') sessionId: string,
+    @Param('userId') targetUserId: string,
+    @Body() roleSessionDto: RoleSessionDto,
+  ) {
+    return this.sessionsService.changeRole(sessionId, req.user.id, targetUserId, roleSessionDto.role);
+  }
+
+  //DELETE /sessions/:id/collaborators/:userId
+  @UseGuards(JwtAuthGuard)
+  @Delete('/:id/collaborators/:userId')
+  removeCollaborator(
+    @Request() req,
+    @Param('id') sessionId: string,
+    @Param('userId') targetUserId: string,
+  ) {
+    return this.sessionsService.removeCollaborator(sessionId, req.user.id, targetUserId);
+  }
+
+  //PATCH /sessions/:id/transfer-owner
+  @UseGuards(JwtAuthGuard)
+  @Patch('/:id/transfer-owner')
+  transferOwner(
+    @Request() req,
+    @Param('id') sessionId: string,
+    @Param('userId') newOwnerId: string,
+  ) {
+    return this.sessionsService.transferOwner(sessionId, req.user.id, newOwnerId);
   }
 }
