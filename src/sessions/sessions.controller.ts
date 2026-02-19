@@ -70,12 +70,12 @@ export class SessionsController {
 
   //PATCH /sessions/:id/transfer-owner
   @UseGuards(JwtAuthGuard)
-  @Patch('/:id/transfer-owner/:userId')
+  @Patch('/:id/transfer-owner')
   transferOwner(
     @Request() req,
     @Param('id') sessionId: string,
-    @Param('userId') newOwnerId: string,
+    @Body('newOwnerId') newOwnerId: string,
   ) {
-    return this.sessionsService.transferOwner(sessionId, req.user.id, newOwnerId);
+    return this.sessionsService.transferOwner(sessionId, req.user.id, newOwnerId[0]);
   }
 }
