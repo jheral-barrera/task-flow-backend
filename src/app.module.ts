@@ -6,16 +6,18 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { SessionsModule } from './sessions/sessions.module';
+import { InvitationModule } from './invitations/invitation.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, // Hace que las variables estén disponibles en toda la app
+      isGlobal: true,
     }),
     PrismaModule,
     UsersModule,
     AuthModule,
     SessionsModule,
+    InvitationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

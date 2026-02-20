@@ -7,7 +7,7 @@ import { RoleSessionsDto } from "./dto/role-sessions.dto";
 
 @Controller('sessions')
 export class SessionsController {
-  constructor(private readonly sessionsService: SessionsService) { }
+  constructor(private readonly sessionsService: SessionsService) {}
 
   //POST /sessions
   @UseGuards(JwtAuthGuard)
