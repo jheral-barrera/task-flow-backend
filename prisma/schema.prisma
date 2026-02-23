@@ -96,7 +96,7 @@ model Invitation {
 model Task {
   id String @id @default(uuid())
   title String
-  description String
+  description String?
   completed Boolean @default(false)
   completedAt DateTime?
   startDate DateTime
