@@ -7,6 +7,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { InvitationModule } from './invitations/invitation.module';
+import { TaskModule } from './task/task.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { InvitationModule } from './invitations/invitation.module';
     AuthModule,
     SessionsModule,
     InvitationModule,
+    TaskModule,
   ],
   controllers: [AppController],
   providers: [AppService],
