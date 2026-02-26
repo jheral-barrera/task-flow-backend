@@ -3,13 +3,16 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { InviteUserDto } from './dto/invite-user.dto';
 import { JoinSessionDto } from './dto/join-session.dto';
 import { ForbiddenException, NotFoundException, ConflictException } from '@nestjs/common';
+import { InvitationGateway } from './invitation.gateway';
 
 @Injectable()
 export class InvitationService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private invitationGateway: InvitationGateway,
+  ) {}
 
   async invite(sessionId: string, senderId: string, inviteUserDto: InviteUserDto) {
-    console.log('Inviting user:', inviteUserDto.email, 'to session:', sessionId, 'by sender:', senderId);
     const sessionUser = await this.prisma.sessionUser.findFirst({
       where: {
         sessionId,
@@ -17,7 +20,6 @@ export class InvitationService {
       },
     });
 
-    console.log('SessionUser:', sessionUser);
     // Solo el owner o admin puede invitar usuarios
     if (!sessionUser || (sessionUser.role !== 'OWNER' && sessionUser.role !== 'ADMIN')) {
       throw new ForbiddenException('Only owner or admin can invite users');
@@ -58,7 +60,7 @@ export class InvitationService {
     }
 
     // crear la invitacion
-    return this.prisma.invitation.create({
+    const invitation = await this.prisma.invitation.create({
       data: {
         sessionId,
         senderId,
@@ -67,6 +69,9 @@ export class InvitationService {
         type: 'INVITE',
       },
     });
+
+    this.invitationGateway.notifyInvitationReceived(invitation);
+    return invitation;
   }
 
   async joinRequest(senderId: string, joinSessionDto: JoinSessionDto) {
@@ -116,7 +121,7 @@ export class InvitationService {
       throw new NotFoundException('Session owner not found');
     }
 
-    return this.prisma.invitation.create({
+    const invitation = await this.prisma.invitation.create({
       data: {
         sessionId: session.id,
         senderId,
@@ -125,6 +130,9 @@ export class InvitationService {
         status: 'PENDING',
       },
     });
+
+    this.invitationGateway.notifyInvitationReceived(invitation);
+    return invitation;
   }
 
   async accept(invitationId: string, userId: string) {
@@ -158,7 +166,7 @@ export class InvitationService {
     }
 
     // Actualizar el estado de la invitacion a aceptada
-    return this.prisma.$transaction([
+    const acceptedInvitation = await this.prisma.$transaction([
       this.prisma.invitation.update({
         where: { id: invitationId },
         data: { status: 'ACCEPTED' },
@@ -171,6 +179,9 @@ export class InvitationService {
         },
       }),
     ]);
+
+    this.invitationGateway.notifyInvitationAccepted(acceptedInvitation[0]);
+    return acceptedInvitation;
   }
 
   async reject(invitationId: string, userId: string) {
@@ -201,12 +212,13 @@ export class InvitationService {
       }
     }
 
-    return this.prisma.invitation.update({
+    const rejectInvitation = await this.prisma.invitation.update({
       where: { id: invitationId },
       data: { status: 'REJECTED' },
     });
 
-    //
+    this.invitationGateway.notifyInvitationRejected(rejectInvitation);
+    return rejectInvitation;
   }
 
   async getMyInvitations(userId: string) {

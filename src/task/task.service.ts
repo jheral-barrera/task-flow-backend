@@ -3,10 +3,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-tasks.dto';
 import { UpdateTaskDto } from './dto/update-tasks.dto';
 import { NotFoundException, ForbiddenException } from '@nestjs/common';
+import { TaskGateway } from './task.gateway';
 
 @Injectable()
 export class TaskService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private taskGateway: TaskGateway,
+  ) {}
 
   async create(sessionId: string, userId: string, createTaskDto: CreateTaskDto) {
     const sessionUser = await this.prisma.sessionUser.findFirst({
@@ -34,13 +38,16 @@ export class TaskService {
       }
     }
 
-    return this.prisma.task.create({
+    const task = await this.prisma.task.create({
       data: {
         ...createTaskDto,
         sessionId,
         createdById: userId,
       },
     });
+
+    this.taskGateway.notifyTaskCreated(task);
+    return task;
   }
 
   async findAll(sessionId: string, userId: string) {
@@ -100,10 +107,13 @@ export class TaskService {
       throw new ForbiddenException('You do not have permission to edit this task');
     }
 
-    return this.prisma.task.update({
+    const updateTask = await this.prisma.task.update({
       where: { id },
       data: updateTaskDto,
     });
+
+    this.taskGateway.notifyTaskUpdated(updateTask);
+    return updateTask;
   }
 
   async remove(id: string, userId: string) {
@@ -122,10 +132,12 @@ export class TaskService {
     if (!userRole || (userRole.role !== 'OWNER' && userRole.role !== 'ADMIN' && userRole.role !== 'EDITOR')) {
       throw new ForbiddenException('You do not have permission to delete this task');
     }
-
-    return this.prisma.task.delete({
+    const deletedTask = await this.prisma.task.delete({
       where: { id },
     });
+
+    this.taskGateway.notifyTaskDeleted(id);
+    return deletedTask;
   }
 
   async complete(id: string, userId: string) {
@@ -145,7 +157,7 @@ export class TaskService {
       throw new NotFoundException('Collaborator is not a member of the session');
     }
 
-    return this.prisma.task.update({
+    const completedTask = await this.prisma.task.update({
       where: { id },
       data: {
         completed: true,
@@ -153,6 +165,9 @@ export class TaskService {
         completedById: userId,
       },
     });
+
+    this.taskGateway.notifyTaskCompleted(completedTask);
+    return completedTask;
   }
 
   async assignCollaborator(id: string, userId: string, collaboratorId: string) {

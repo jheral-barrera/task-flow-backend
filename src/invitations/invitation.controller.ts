@@ -9,9 +9,10 @@ import { Post, Patch, Get } from "@nestjs/common";
 
 @Controller('invitations')
 export class InvitationController {
-  constructor(private readonly invitationService: InvitationService) { }
+  constructor(private readonly invitationService: InvitationService) {}
 
-  //POST /invitations/invite
+  //:id = id de la sesion
+  //POST /invitations/:id/invite
   @UseGuards(JwtAuthGuard)
   @Post('/:id/invite')
   invite(@Request() req, @Param('id') sessionId: string, @Body() inviteUserDto: InviteUserDto) {
